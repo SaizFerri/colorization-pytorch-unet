@@ -1,0 +1,9 @@
+__pycache__/
+_dataset/
+dataset/
+checkpoints/
+*.cwl.json
+*.red.json
+*.tar.gz
+*.log
+*.zip

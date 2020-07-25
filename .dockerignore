@@ -1,0 +1,7 @@
+checkpoints/*
+dataset/*
+*.npy
+*.zip
+*.tar.gz
+.git
+.cache
