@@ -19,7 +19,7 @@ def validate(val_loader, model, criterion, epoch, use_gpu=False):
     # Run model and record loss
     output_bins = model(input_gray)
     loss = criterion(output_bins, bins)
-    losses.update(loss.item()*100, input_gray.size(0))
+    losses.update(loss.item(), input_gray.size(0))
 
     # Record time to do forward passes and save images
     batch_time.update(time.time() - end)

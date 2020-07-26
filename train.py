@@ -20,7 +20,7 @@ def train(train_loader, model, criterion, optimizer, epoch, use_gpu=False):
     # Run forward pass
     output_bins = model(input_gray)
     loss = criterion(output_bins, bins)
-    losses.update(loss.item()*100, input_gray.size(0))
+    losses.update(loss.item(), input_gray.size(0))
 
     # Compute gradient and optimize
     optimizer.zero_grad()

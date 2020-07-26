@@ -17,12 +17,14 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 import torchvision
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision import datasets, models, transforms
 
 from model import Model
-from utils import to_rgb, encode_bins
+from utils import to_rgb, encode_bins, deserialize_bins
 from train import train
 from validate import validate
+from evaluate import evaluate
 
 # Arguments
 parser = argparse.ArgumentParser()
@@ -95,8 +97,6 @@ CHECKPOINTS_PATH = os.path.expanduser(args.checkpoints_dir)
 N_BINS = args.num_bins
 W_BIN  = np.sqrt(N_BINS).astype(int)
 
-# dataset_bin_colors_mode = {}
-
 use_gpu = False# torch.cuda.is_available()
 
 class GrayscaleImageFolder(datasets.ImageFolder):
@@ -141,25 +141,92 @@ val_transforms = transforms.Compose([
 val_imagefolder = GrayscaleImageFolder(VAL_PATH, val_transforms)
 val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_size, shuffle=True)
 
+# model = Model(N_BINS)
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3)
+
+# if use_gpu: 
+#   criterion = criterion.cuda()
+#   model = model.cuda()
+
+# epochs = args.num_epochs
+# best_losses = 3
+
+# for epoch in range(0, epochs):
+#   if use_gpu and epoch > 0:
+#     model.cuda()
+#   # Train for one epoch, then validate
+#   train(train_loader, model, criterion, optimizer, epoch, use_gpu)
+#   with torch.no_grad():
+#     losses = validate(val_loader, model, criterion, epoch, use_gpu)
+#     scheduler.step(losses)
+#     print(scheduler._last_lr)
+#   # Save checkpoint and replace old best model if current model is better
+#   if losses < best_losses:
+#     best_losses = losses
+#     # torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
+
+'''
+  Evaluate one image with trained model
+'''
 model = Model(N_BINS)
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
-if use_gpu: 
-  criterion = criterion.cuda()
-  model = model.cuda()
+gray, image_ab, bins = next(iter(val_loader))
+# Show grayscale image
+# plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
+# plt.figure()
+f, axarr = plt.subplots(len(gray), 2)
 
-epochs = args.num_epochs
-best_losses = 400
+for i in range(len(gray)):
+  output_image = evaluate(gray[i], image_ab[i], bins[i], model, 'mean_color_bins_324.npy')
 
-for epoch in range(0, epochs):
-  if use_gpu and epoch > 0:
-    model.cuda()
-  # Train for one epoch, then validate
-  train(train_loader, model, criterion, optimizer, epoch, use_gpu)
-  with torch.no_grad():
-    losses = validate(val_loader, model, criterion, epoch, use_gpu)
-  # Save checkpoint and replace old best model if current model is better
-  if losses < best_losses:
-    best_losses = losses
-    torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
+  axarr[i][0].set_title('Ground truth')
+  axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+
+  axarr[i][1].set_title('Generated')
+  axarr[i][1].imshow(output_image)
+
+plt.pause(5)
+
+# def get_dataset_bin_mode(colors_dict):
+#   x = np.linspace(0,1,W_BIN+1)
+#   distance = x[1]
+#   mode_dict = copy.deepcopy(colors_dict)
+
+#   for bin in mode_dict:
+#     for channel, _ in enumerate(mode_dict[bin]):
+#       if (len(mode_dict[bin][channel]) > 0):
+#         mode_dict[bin][channel] = np.mean(np.array(mode_dict[bin][channel]))
+#       else:
+#         mode_dict[bin][channel] = 0
+
+#   np.save('mean_color_bins_324.npy', mode_dict)
+#   del mode_dict
+
+# def calculate_bin(a, b, width):
+#   return (width * b) + a
+
+# def add_to_dict(bin, a, b):
+#   dataset_bin_colors[bin][0].append(a)
+#   dataset_bin_colors[bin][1].append(b)
+
+# def encode_bins(ab_image):
+#   x = np.linspace(0,1,W_BIN+1)
+#   indices = np.digitize(ab_image, x) - 1
+  
+#   bins = np.vectorize(calculate_bin)(indices[:,:,0], indices[:,:,1], W_BIN)
+#   np.vectorize(add_to_dict)(bins, ab_image[:,:,0], ab_image[:,:,1])
+
+#   return bins
+
+# counter = 0
+
+# for index, y in enumerate(train_loader):
+#   gray_images, ab_images, bins = y
+
+#   for ab in ab_images:
+#     encode_bins(ab)
+
+# get_dataset_bin_mode(dataset_bin_colors)

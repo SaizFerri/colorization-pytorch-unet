@@ -77,11 +77,39 @@ def encode_bins(ab_image, n_bins):
 '''
   Return the mode of the predicted bin for each color chanel
 '''
-def decode_pixel(p, dataset_bin_colors_mode):
-  a = dataset_bin_colors_mode[p][0]
-  b = dataset_bin_colors_mode[p][1]
+def decode_pixel(bin, dataset_bin_colors_mode):
+  a = dataset_bin_colors_mode[bin][0]
+  b = dataset_bin_colors_mode[bin][1]
+
+  if a == 0:
+    a = assign_next_bin(bin, a, 0, dataset_bin_colors_mode)
+
+  if b == 0:
+    b = assign_next_bin(bin, b, 1, dataset_bin_colors_mode)
 
   return a, b
+
+'''
+  Assign predicted color from next bin
+'''
+def assign_next_bin(bin, channel, index, dataset_bin_colors_mode):
+  counter = [1, -1]
+  length = len(dataset_bin_colors_mode) - 1
+
+  while channel == 0:
+    plus_index = bin + counter[0] if bin + counter[0] <= length else length
+    channel = dataset_bin_colors_mode[plus_index][index]
+
+    if channel == 0:
+      counter[0] += 1
+      minus_index = bin + counter[1] if bin + counter[1] >= 0 else 0
+      channel = dataset_bin_colors_mode[minus_index][index]
+      counter[1] -= 1
+
+  return channel
+
+def annealed_mean(z, T):
+  return np.exp(z / T) / np.sum(np.exp(z / T))
 
 def serialize_bins(ab_image):
   return encode_bins(ab_image)
