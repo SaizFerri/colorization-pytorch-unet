@@ -76,34 +76,50 @@ def encode_bins(ab_image, n_bins):
 
 '''
   Return the mode of the predicted bin for each color chanel
+  TODO: calculate annealed mean
 '''
-def decode_pixel(bin, dataset_bin_colors_mode):
-  a = dataset_bin_colors_mode[bin][0]
-  b = dataset_bin_colors_mode[bin][1]
+def decode_pixel(bin, T, dataset_bin_colors_mode, dataset_bin_colors_mean):
+  a_mode = dataset_bin_colors_mode[bin][0]
+  b_mode = dataset_bin_colors_mode[bin][1]
 
-  if a == 0:
-    a = assign_next_bin(bin, a, 0, dataset_bin_colors_mode)
+  a_mean = dataset_bin_colors_mean[bin][0]
+  b_mean = dataset_bin_colors_mean[bin][1]
 
-  if b == 0:
-    b = assign_next_bin(bin, b, 1, dataset_bin_colors_mode)
+  if a_mode == 0:
+    a_mode = assign_next_bin(bin, a_mode, 0, dataset_bin_colors_mode)
+
+  if b_mode == 0:
+    b_mode = assign_next_bin(bin, b_mode, 1, dataset_bin_colors_mode)
+
+  if a_mean == 0:
+    a_mean = assign_next_bin(bin, a_mean, 0, dataset_bin_colors_mean)
+
+  if b_mean == 0:
+    b_mean = assign_next_bin(bin, b_mean, 1, dataset_bin_colors_mean)
+  
+  a_distance = a_mode - a_mean
+  b_distance = b_mode - b_mean
+
+  a = a_mode - (a_distance * T)
+  b = b_mode - (b_distance * T)
 
   return a, b
 
 '''
   Assign predicted color from next bin
 '''
-def assign_next_bin(bin, channel, index, dataset_bin_colors_mode):
+def assign_next_bin(bin, channel, index, colormap):
   counter = [1, -1]
-  length = len(dataset_bin_colors_mode) - 1
+  length = len(colormap) - 1
 
   while channel == 0:
     plus_index = bin + counter[0] if bin + counter[0] <= length else length
-    channel = dataset_bin_colors_mode[plus_index][index]
+    channel = colormap[plus_index][index]
 
     if channel == 0:
       counter[0] += 1
       minus_index = bin + counter[1] if bin + counter[1] >= 0 else 0
-      channel = dataset_bin_colors_mode[minus_index][index]
+      channel = colormap[minus_index][index]
       counter[1] -= 1
 
   return channel
@@ -114,11 +130,12 @@ def annealed_mean(z, T):
 def serialize_bins(ab_image):
   return encode_bins(ab_image)
 
-def deserialize_bins(bins, path):
+def deserialize_bins(bins, T, mode_path, mean_path):
   bins = bins.numpy()
-  dataset_bin_colors_mode = np.load(path, allow_pickle=True)
+  dataset_bin_colors_mode = np.load(mode_path, allow_pickle=True)
+  dataset_bin_colors_mean = np.load(mean_path, allow_pickle=True)
 
-  return np.array(np.vectorize(decode_pixel)(bins, dataset_bin_colors_mode))
+  return np.array(np.vectorize(decode_pixel)(bins, T, dataset_bin_colors_mode, dataset_bin_colors_mean))
 
 def to_rgb(grayscale_input, ab_input):
   '''

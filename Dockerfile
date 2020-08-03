@@ -25,4 +25,5 @@ ADD --chown=cc:cc model.py /home/cc/.local/bin/model.py
 ADD --chown=cc:cc utils.py /home/cc/.local/bin/utils.py
 ADD --chown=cc:cc train.py /home/cc/.local/bin/train.py
 ADD --chown=cc:cc validate.py /home/cc/.local/bin/validate.py
+ADD --chown=cc:cc evaluate.py /home/cc/.local/bin/evaluate.py
 ADD --chown=cc:cc main.py /home/cc/.local/bin/main.py

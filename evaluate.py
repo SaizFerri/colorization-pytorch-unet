@@ -23,8 +23,10 @@ def evaluate(gray, ab_input, bins, model, colors_path):
       gray,
       torch.from_numpy(
         deserialize_bins(
-          output_bins.squeeze(0).argmax(0), 
-          colors_path
+          output_bins.squeeze(0).argmax(0),
+          0.5,
+          colors_path['mode'],
+          colors_path['mean'],
         ),
       ).float()
     )

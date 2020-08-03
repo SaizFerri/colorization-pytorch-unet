@@ -9,6 +9,16 @@ inputs:
     inputBinding:
       position: 0
     doc: "Data: Path to read-only directory containing image files."
+  saved_model_dir:
+    type: "Directory?"
+    inputBinding:
+      prefix: "--saved-model-dir"
+    doc: "Data: Path of dir of last saved model"
+  saved_model_file:
+    type: "string?"
+    inputBinding:
+      prefix: "--saved-model-file"
+    doc: "Data: File of last saved model"
   checkpoints_dir:
     type: "Directory"
     inputBinding:

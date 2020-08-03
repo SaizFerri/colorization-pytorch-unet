@@ -34,10 +34,15 @@ parser.add_argument(
   help='Data: Path to read-only directory containing image *.jpeg files.'
 )
 
-# parser.add_argument(
-#   '--outputs-dir', type=str, default=None,
-#   help='Data: Path to writable directory for the output images'
-# )
+parser.add_argument(
+  '--saved-model-dir', type=str, default=None,
+  help='Data: Path of dir of last saved model'
+)
+
+parser.add_argument(
+  '--saved-model-file', type=str, default=None,
+  help='Data: File of last saved model'
+)
 
 parser.add_argument(
   '--checkpoints-dir', type=str, default=None,
@@ -94,10 +99,15 @@ VAL_PATH = os.path.join(data_dir, 'val')
 
 CHECKPOINTS_PATH = os.path.expanduser(args.checkpoints_dir)
 
+SAVED_MODEL_PATH = None
+
+if args.saved_model_dir is not None and args.saved_model_file is not None:
+  SAVED_MODEL_PATH = os.path.join(os.path.expanduser(args.saved_model_dir), args.saved_model_file)
+
 N_BINS = args.num_bins
 W_BIN  = np.sqrt(N_BINS).astype(int)
 
-use_gpu = False# torch.cuda.is_available()
+use_gpu = False # torch.cuda.is_available()
 
 class GrayscaleImageFolder(datasets.ImageFolder):
   def __getitem__(self, index):
@@ -141,10 +151,19 @@ val_transforms = transforms.Compose([
 val_imagefolder = GrayscaleImageFolder(VAL_PATH, val_transforms)
 val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_size, shuffle=True)
 
+'''
+Training
+'''
 # model = Model(N_BINS)
+
+# if SAVED_MODEL_PATH is not None:
+#   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+#   print(SAVED_MODEL_PATH)
+#   print('Model loaded')
+
 # criterion = nn.CrossEntropyLoss()
 # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3)
+# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=2)
 
 # if use_gpu: 
 #   criterion = criterion.cuda()
@@ -153,25 +172,29 @@ val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_
 # epochs = args.num_epochs
 # best_losses = 3
 
-# for epoch in range(0, epochs):
-#   if use_gpu and epoch > 0:
+# for epoch in range(args.from_epoch, epochs):
+#   if use_gpu and epoch > args.from_epoch:
 #     model.cuda()
 #   # Train for one epoch, then validate
 #   train(train_loader, model, criterion, optimizer, epoch, use_gpu)
 #   with torch.no_grad():
 #     losses = validate(val_loader, model, criterion, epoch, use_gpu)
 #     scheduler.step(losses)
-#     print(scheduler._last_lr)
 #   # Save checkpoint and replace old best model if current model is better
 #   if losses < best_losses:
 #     best_losses = losses
-#     # torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
+#     torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
 
 '''
   Evaluate one image with trained model
 '''
 model = Model(N_BINS)
-model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
+
+if SAVED_MODEL_PATH is not None:
+  model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+  print(SAVED_MODEL_PATH)
+  print('Model loaded')
+#model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
 gray, image_ab, bins = next(iter(val_loader))
 # Show grayscale image
@@ -180,7 +203,10 @@ gray, image_ab, bins = next(iter(val_loader))
 f, axarr = plt.subplots(len(gray), 2)
 
 for i in range(len(gray)):
-  output_image = evaluate(gray[i], image_ab[i], bins[i], model, 'mean_color_bins_324.npy')
+  output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
+    'mode': 'mode_color_bins_324.npy',
+    'mean': 'mean_color_bins_324.npy'
+  })
 
   axarr[i][0].set_title('Ground truth')
   axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
