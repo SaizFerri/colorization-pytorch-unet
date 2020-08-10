@@ -1,7 +1,6 @@
 __pycache__/
-_dataset/
-dataset/
-checkpoints/
+_dataset*/
+dataset*/
 *.cwl.json
 *.red.json
 *.tar.gz

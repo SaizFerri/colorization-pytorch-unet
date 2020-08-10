@@ -107,7 +107,7 @@ if args.saved_model_dir is not None and args.saved_model_file is not None:
 N_BINS = args.num_bins
 W_BIN  = np.sqrt(N_BINS).astype(int)
 
-use_gpu = False # torch.cuda.is_available()
+use_gpu = torch.cuda.is_available()
 
 class GrayscaleImageFolder(datasets.ImageFolder):
   def __getitem__(self, index):
@@ -154,67 +154,67 @@ val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_
 '''
 Training
 '''
-# model = Model(N_BINS)
-
-# if SAVED_MODEL_PATH is not None:
-#   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
-#   print(SAVED_MODEL_PATH)
-#   print('Model loaded')
-
-# criterion = nn.CrossEntropyLoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=2)
-
-# if use_gpu: 
-#   criterion = criterion.cuda()
-#   model = model.cuda()
-
-# epochs = args.num_epochs
-# best_losses = 3
-
-# for epoch in range(args.from_epoch, epochs):
-#   if use_gpu and epoch > args.from_epoch:
-#     model.cuda()
-#   # Train for one epoch, then validate
-#   train(train_loader, model, criterion, optimizer, epoch, use_gpu)
-#   with torch.no_grad():
-#     losses = validate(val_loader, model, criterion, epoch, use_gpu)
-#     scheduler.step(losses)
-#   # Save checkpoint and replace old best model if current model is better
-#   if losses < best_losses:
-#     best_losses = losses
-#     torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
-
-'''
-  Evaluate one image with trained model
-'''
 model = Model(N_BINS)
 
 if SAVED_MODEL_PATH is not None:
   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
   print(SAVED_MODEL_PATH)
   print('Model loaded')
-#model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
-gray, image_ab, bins = next(iter(val_loader))
-# Show grayscale image
-# plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
-# plt.figure()
-f, axarr = plt.subplots(len(gray), 2)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+scheduler = ReduceLROnPlateau(optimizer, 'min', patience=10)
 
-for i in range(len(gray)):
-  output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
-    'mode': 'mode_color_bins_324.npy',
-    'mean': 'mean_color_bins_324.npy'
-  })
+if use_gpu: 
+  criterion = criterion.cuda()
+  model = model.cuda()
 
-  axarr[i][0].set_title('Ground truth')
-  axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+epochs = args.num_epochs
+best_losses = 3
 
-  axarr[i][1].set_title('Generated')
-  axarr[i][1].imshow(output_image)
+for epoch in range(args.from_epoch, epochs):
+  if use_gpu and epoch > args.from_epoch:
+    model.cuda()
+  # Train for one epoch, then validate
+  train(train_loader, model, criterion, optimizer, epoch, use_gpu)
+  with torch.no_grad():
+    losses = validate(val_loader, model, criterion, epoch, use_gpu)
+    scheduler.step(losses)
+  # Save checkpoint and replace old best model if current model is better
+  if losses < best_losses:
+    best_losses = losses
+    torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
 
-plt.pause(5)
+'''
+  Evaluate one image with trained model
+'''
+# model = Model(N_BINS)
+
+# if SAVED_MODEL_PATH is not None:
+#   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+#   print(SAVED_MODEL_PATH)
+#   print('Model loaded')
+# #model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
+
+# gray, image_ab, bins = next(iter(val_loader))
+# # Show grayscale image
+# # plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
+# # plt.figure()
+# f, axarr = plt.subplots(len(gray), 2)
+
+# for i in range(len(gray)):
+#   output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
+#     'mode': 'mode_color_bins_324.npy',
+#     'mean': 'mean_color_bins_324.npy'
+#   })
+
+#   axarr[i][0].set_title('Ground truth')
+#   axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+
+#   axarr[i][1].set_title('Generated')
+#   axarr[i][1].imshow(output_image)
+
+# plt.pause(10)
 
 # def get_dataset_bin_mode(colors_dict):
 #   x = np.linspace(0,1,W_BIN+1)

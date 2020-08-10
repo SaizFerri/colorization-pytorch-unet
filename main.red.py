@@ -4,10 +4,10 @@ import json
 
 SSH_SERVER = 'dt1.f4.htw-berlin.de'
 SSH_AUTH = {'username': '{{ssh_username}}', 'password': '{{ssh_password}}'}
-DATA_DIR = 'colorization/dataset'
+DATA_DIR = 'colorization/dataset_1'
 AGENCY_URL = 'https://agency.f4.htw-berlin.de/dt'
 BINS = [36, 324]
-SAVED_MODEL_FILES = ['model-36-48-124.345.pth', 'model-324-43-208.819.pth']
+# SAVED_MODEL_FILES = ['model-36-48-124.345.pth', 'model-324-43-208.819.pth']
 # STEPS_PER_EPOCH = 10
 
 
@@ -41,25 +41,25 @@ for i, _bins in enumerate(BINS):
           }
         }
       },
-      'saved_model_dir': {
-        'class': 'Directory',
-        'connector': {
-          'command': 'red-connector-ssh',
-          'mount': True,
-          'access': {
-            'host': SSH_SERVER,
-            'auth': SSH_AUTH,
-            'dirPath': 'colorization/saved_models',
-            'writable': True
-          }
-        }
-      },
-      'saved_model_file': SAVED_MODEL_FILES[i],
+      # 'saved_model_dir': {
+      #   'class': 'Directory',
+      #   'connector': {
+      #     'command': 'red-connector-ssh',
+      #     'mount': True,
+      #     'access': {
+      #       'host': SSH_SERVER,
+      #       'auth': SSH_AUTH,
+      #       'dirPath': 'colorization/saved_models',
+      #       'writable': True
+      #     }
+      #   }
+      # },
+      # 'saved_model_file': SAVED_MODEL_FILES[i],
       'batch_size': 64,
       'num_bins': _bins,
-      'from_epoch': 50,
-      'num_epochs': 70,
-      'learning_rate': 0.1,
+      'from_epoch': 0,
+      'num_epochs': 60,
+      'learning_rate': 0.001,
       'log_dir': {
         'class': 'Directory',
         'connector': {

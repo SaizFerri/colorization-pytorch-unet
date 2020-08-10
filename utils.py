@@ -76,7 +76,6 @@ def encode_bins(ab_image, n_bins):
 
 '''
   Return the mode of the predicted bin for each color chanel
-  TODO: calculate annealed mean
 '''
 def decode_pixel(bin, T, dataset_bin_colors_mode, dataset_bin_colors_mean):
   a_mode = dataset_bin_colors_mode[bin][0]
