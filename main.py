@@ -5,6 +5,7 @@ import argparse
 import time
 import copy
 import shutil
+import random
 
 # For conversion
 from skimage.color import lab2rgb, rgb2lab, rgb2gray
@@ -84,7 +85,26 @@ parser.add_argument(
   help='Debug: Name of the log file, generated when --log-dir is set. Default: training.log'
 )
 
+parser.add_argument(
+  '--seed', type=int, default=None,
+  help='Parameter: Seed for the visualization'
+)
+
+parser.add_argument(
+  '--temperature', type=float, default=1,
+  help='Parameter: Temperature parameter to tune the predictions.'
+)
+
+
 args = parser.parse_args()
+temperature = args.temperature
+seed = args.seed
+
+if seed is not None:
+  random.seed(seed)
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+  np.random.seed(seed)
 
 # Redirect output streams for logging
 if args.log_dir:
@@ -97,7 +117,8 @@ data_dir = os.path.expanduser(args.data_dir)
 TRAIN_PATH = os.path.join(data_dir, 'train')
 VAL_PATH = os.path.join(data_dir, 'val')
 
-CHECKPOINTS_PATH = os.path.expanduser(args.checkpoints_dir)
+if args.checkpoints_dir is not None:
+  CHECKPOINTS_PATH = os.path.expanduser(args.checkpoints_dir)
 
 SAVED_MODEL_PATH = None
 
@@ -154,67 +175,69 @@ val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_
 '''
 Training
 '''
-model = Model(N_BINS)
-
-if SAVED_MODEL_PATH is not None:
-  model.load_state_dict(torch.load(SAVED_MODEL_PATH))
-  print(SAVED_MODEL_PATH)
-  print('Model loaded')
-
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-scheduler = ReduceLROnPlateau(optimizer, 'min', patience=10)
-
-if use_gpu: 
-  criterion = criterion.cuda()
-  model = model.cuda()
-
-epochs = args.num_epochs
-best_losses = 3
-
-for epoch in range(args.from_epoch, epochs):
-  if use_gpu and epoch > args.from_epoch:
-    model.cuda()
-  # Train for one epoch, then validate
-  train(train_loader, model, criterion, optimizer, epoch, use_gpu)
-  with torch.no_grad():
-    losses = validate(val_loader, model, criterion, epoch, use_gpu)
-    scheduler.step(losses)
-  # Save checkpoint and replace old best model if current model is better
-  if losses < best_losses:
-    best_losses = losses
-    torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
-
-'''
-  Evaluate one image with trained model
-'''
 # model = Model(N_BINS)
 
 # if SAVED_MODEL_PATH is not None:
 #   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
 #   print(SAVED_MODEL_PATH)
 #   print('Model loaded')
-# #model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
-# gray, image_ab, bins = next(iter(val_loader))
-# # Show grayscale image
-# # plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
-# # plt.figure()
-# f, axarr = plt.subplots(len(gray), 2)
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=10)
 
-# for i in range(len(gray)):
-#   output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
-#     'mode': 'mode_color_bins_324.npy',
-#     'mean': 'mean_color_bins_324.npy'
-#   })
+# if use_gpu: 
+#   criterion = criterion.cuda()
+#   model = model.cuda()
 
-#   axarr[i][0].set_title('Ground truth')
-#   axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+# epochs = args.num_epochs
+# best_losses = 3
 
-#   axarr[i][1].set_title('Generated')
-#   axarr[i][1].imshow(output_image)
+# for epoch in range(args.from_epoch, epochs):
+#   if use_gpu and epoch > args.from_epoch:
+#     model.cuda()
+#   # Train for one epoch, then validate
+#   train(train_loader, model, criterion, optimizer, epoch, use_gpu)
+#   with torch.no_grad():
+#     losses = validate(val_loader, model, criterion, epoch, use_gpu)
+#     scheduler.step(losses)
+#   # Save checkpoint and replace old best model if current model is better
+#   if losses < best_losses:
+#     best_losses = losses
+#     torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,losses))
 
-# plt.pause(10)
+'''
+  Evaluate one image with trained model
+'''
+model = Model(N_BINS)
+
+if SAVED_MODEL_PATH is not None:
+  model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+  print(SAVED_MODEL_PATH)
+  print('Model loaded')
+#model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
+
+gray, image_ab, bins = next(iter(val_loader))
+# Show grayscale image
+# plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
+# plt.figure()
+f, axarr = plt.subplots(len(gray), 2)
+
+for i in range(len(gray)):
+  output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
+    'mode': 'mode_color_bins_'+str(N_BINS)+'.npy',
+    'mean': 'mean_color_bins_'+str(N_BINS)+'.npy'
+  }, temperature)
+
+  axarr[i][0].set_title('Ground truth')
+  axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+
+  axarr[i][1].set_title('Generated')
+  axarr[i][1].imshow(output_image)
+
+plt.pause(5)
+
+# dataset_bin_colors = {i: [[], []] for i in range(N_BINS)}
 
 # def get_dataset_bin_mode(colors_dict):
 #   x = np.linspace(0,1,W_BIN+1)
@@ -228,7 +251,7 @@ for epoch in range(args.from_epoch, epochs):
 #       else:
 #         mode_dict[bin][channel] = 0
 
-#   np.save('mean_color_bins_324.npy', mode_dict)
+#   np.save('mean_color_bins_36.npy', mode_dict)
 #   del mode_dict
 
 # def calculate_bin(a, b, width):
@@ -238,7 +261,7 @@ for epoch in range(args.from_epoch, epochs):
 #   dataset_bin_colors[bin][0].append(a)
 #   dataset_bin_colors[bin][1].append(b)
 
-# def encode_bins(ab_image):
+# def _encode_bins(ab_image):
 #   x = np.linspace(0,1,W_BIN+1)
 #   indices = np.digitize(ab_image, x) - 1
   
@@ -253,6 +276,6 @@ for epoch in range(args.from_epoch, epochs):
 #   gray_images, ab_images, bins = y
 
 #   for ab in ab_images:
-#     encode_bins(ab)
+#     _encode_bins(ab)
 
 # get_dataset_bin_mode(dataset_bin_colors)

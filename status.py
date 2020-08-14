@@ -18,7 +18,7 @@ r = requests.get(
 )
 
 # r = requests.delete(
-#   f'{url}/batches/5f1efcb765b9f5f4dd850baa',
+#   f'{url}/batches/5f2eb8ab849bbf45c303e6c3',
 #   auth=auth
 # )
 

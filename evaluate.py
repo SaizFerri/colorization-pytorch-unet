@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from utils import to_rgb, deserialize_bins
 
-def evaluate(gray, ab_input, bins, model, colors_path):
+def evaluate(gray, ab_input, bins, model, colors_path, temperature):
   model.eval()
 
   with torch.no_grad():
@@ -24,7 +24,7 @@ def evaluate(gray, ab_input, bins, model, colors_path):
       torch.from_numpy(
         deserialize_bins(
           output_bins.squeeze(0).argmax(0),
-          0.5,
+          temperature,
           colors_path['mode'],
           colors_path['mean'],
         ),
