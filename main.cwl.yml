@@ -59,6 +59,16 @@ inputs:
     inputBinding:
       prefix: "--log-file-name"
     doc: "Debug: Name of the log file, generated when --log-dir is set. Default: training.log"
+  temperature:
+    type: "float?"
+    inputBinding:
+      prefix: "--temperature"
+    doc: "Temperature parameter: Default: 1"
+  seed:
+    type: "int?"
+    inputBinding:
+      prefix: "--seed"
+    doc: "Seed for the visualisation. Default: None"
 
 outputs:
   weights_file:

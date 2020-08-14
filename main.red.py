@@ -73,7 +73,8 @@ for i, _bins in enumerate(BINS):
           }
         }
       },
-      'log_file_name': 'training_'+str(_bins)+'.log'
+      'log_file_name': 'training_'+str(_bins)+'.log',
+      'temperature': 1
     },
     'outputs': {
       'weights_file': {

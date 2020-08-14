@@ -21,6 +21,27 @@ class AverageMeter(object):
     self.sum += val * n
     self.count += n
     self.avg = self.sum / self.count
+
+def load_img(img, N_BINS):
+  img_original = np.asarray(img)
+  
+  # rgb to lab
+  img_lab = rgb2lab(img_original)
+  img_lab = (img_lab + 128) / 255
+  img_ab = img_lab[:, :, 1:3]
+
+  
+  # form bins
+  bins = torch.from_numpy(encode_bins(img_ab, N_BINS))
+
+  #ab channels
+  img_ab = torch.from_numpy(img_ab.transpose((2, 0, 1))).float()
+  
+  # greyscale image
+  img_original = rgb2gray(img_original)
+  img_original = torch.from_numpy(img_original).unsqueeze(0).float()
+  
+  return img_original, img_ab, bins
     
 '''
   Generate a dictionary with the mode of every bin

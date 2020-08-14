@@ -7,6 +7,8 @@ import copy
 import shutil
 import random
 
+from PIL import Image
+
 # For conversion
 from skimage.color import lab2rgb, rgb2lab, rgb2gray
 from skimage import io
@@ -20,9 +22,10 @@ import torch.utils.data
 import torchvision
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision import datasets, models, transforms
+import torchvision.transforms.functional as TF
 
 from model import Model
-from utils import to_rgb, encode_bins, deserialize_bins
+from utils import to_rgb, encode_bins, deserialize_bins, load_img
 from train import train
 from validate import validate
 from evaluate import evaluate
@@ -217,23 +220,42 @@ if SAVED_MODEL_PATH is not None:
   print('Model loaded')
 #model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
-gray, image_ab, bins = next(iter(val_loader))
+image = Image.open('dataset_1/val/field/243202127_1f7da59043.jpg')
+image = TF.resize(image, 128)
+image = TF.center_crop(image, 128)
+gray, image_ab, bins = load_img(image, N_BINS)
+
+output_image = evaluate(gray, image_ab, bins, model, {
+  'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+  'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+}, temperature)
+# gray, image_ab, bins = next(iter(val_loader))
 # Show grayscale image
 # plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
 # plt.figure()
+# f, axarr = plt.subplots(len(gray), 2)
+
+# for i in range(len(gray)):
+#   output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
+#     'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+#     'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+#   }, temperature)
+
+#   axarr[i][0].set_title('Ground truth')
+#   axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
+
+#   axarr[i][1].set_title('Generated')
+#   axarr[i][1].imshow(output_image)
+
+# plt.pause(5)
+
 f, axarr = plt.subplots(len(gray), 2)
 
-for i in range(len(gray)):
-  output_image = evaluate(gray[i], image_ab[i], bins[i], model, {
-    'mode': 'mode_color_bins_'+str(N_BINS)+'.npy',
-    'mean': 'mean_color_bins_'+str(N_BINS)+'.npy'
-  }, temperature)
+axarr[0].set_title('Ground truth')
+axarr[0].imshow(to_rgb(gray, image_ab))
 
-  axarr[i][0].set_title('Ground truth')
-  axarr[i][0].imshow(to_rgb(gray[i], image_ab[i]))
-
-  axarr[i][1].set_title('Generated')
-  axarr[i][1].imshow(output_image)
+axarr[1].set_title('Generated')
+axarr[1].imshow(output_image)
 
 plt.pause(5)
 
