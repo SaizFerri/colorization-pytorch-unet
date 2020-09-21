@@ -102,6 +102,10 @@ if SAVED_MODEL_PATH is not None:
   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
   print(SAVED_MODEL_PATH)
   print('Model loaded')
+
+# Count numbers of parameters
+pytorch_total_params = sum(p.numel() for p in model.parameters())
+print(pytorch_total_params)
   
 image = Image.open(IMAGE_PATH)
 image = TF.resize(image, 128)

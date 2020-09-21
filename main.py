@@ -153,7 +153,7 @@ class GrayscaleImageFolder(datasets.ImageFolder):
       #ab channels
       img_ab = torch.from_numpy(img_ab.transpose((2, 0, 1))).float()
 
-      # greyscale image
+      # grayscale image
       img_original = rgb2gray(img_original)
       img_original = torch.from_numpy(img_original).unsqueeze(0).float()
     
@@ -161,7 +161,8 @@ class GrayscaleImageFolder(datasets.ImageFolder):
 
 # Training
 train_transforms = transforms.Compose([
-  transforms.RandomResizedCrop(128),
+  transforms.Resize((128, 128)),
+  # transforms.RandomResizedCrop(128),
   transforms.RandomHorizontalFlip()
 ])
 train_imagefolder = GrayscaleImageFolder(TRAIN_PATH, train_transforms)
@@ -169,8 +170,7 @@ train_loader = torch.utils.data.DataLoader(train_imagefolder, batch_size=args.ba
 
 # Validation
 val_transforms = transforms.Compose([
-  transforms.Resize(128),
-  transforms.CenterCrop(128)
+  transforms.Resize((128, 128))
 ])
 val_imagefolder = GrayscaleImageFolder(VAL_PATH, val_transforms)
 val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_size, shuffle=True)
@@ -218,17 +218,17 @@ if SAVED_MODEL_PATH is not None:
   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
   print(SAVED_MODEL_PATH)
   print('Model loaded')
-#model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
+# model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
-image = Image.open('dataset_1/val/field/243202127_1f7da59043.jpg')
-image = TF.resize(image, 128)
-image = TF.center_crop(image, 128)
-gray, image_ab, bins = load_img(image, N_BINS)
+# image = Image.open('dataset_1/val/field/243202127_1f7da59043.jpg')
+# image = TF.resize(image, 128)
+# image = TF.center_crop(image, 128)
+# gray, image_ab, bins = load_img(image, N_BINS)
 
-output_image = evaluate(gray, image_ab, bins, model, {
-  'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
-  'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
-}, temperature)
+# output_image = evaluate(gray, image_ab, bins, model, {
+#   'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+#   'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+# }, temperature)
 # gray, image_ab, bins = next(iter(val_loader))
 # Show grayscale image
 # plt.imshow(gray[0].numpy().transpose(1, 2, 0).squeeze(2), cmap='gray', vmin=0, vmax=1)
@@ -249,55 +249,106 @@ output_image = evaluate(gray, image_ab, bins, model, {
 
 # plt.pause(5)
 
-f, axarr = plt.subplots(len(gray), 2)
+# f, axarr = plt.subplots(len(gray), 2)
 
-axarr[0].set_title('Ground truth')
-axarr[0].imshow(to_rgb(gray, image_ab))
+def save_img(img, label, path, is_gray=False):
+  f, axarr = plt.subplots(1,1)
+  axarr.axis('off')
+  axarr.title.set_text(label)
 
-axarr[1].set_title('Generated')
-axarr[1].imshow(output_image)
+  if is_gray:
+    axarr.imshow(img, cmap='gray', vmin=0, vmax=1)
+  else:
+    axarr.imshow(img)
 
-plt.pause(5)
+  f.savefig(path)
+  plt.close(f)
+
+for i, loader in enumerate(val_loader):
+  gray, image_ab, bins = loader
+
+  for j in range(len(gray)):
+    save_img(to_rgb(gray[j], image_ab[j]), 'Ground Truth', 'results_324/ground_truth/' + str(i) + '' + str(j) + '.png')
+
+    save_img(gray[j].squeeze(0), 'Grayscale', 'results_324/grayscale/' + str(i) + '' + str(j) + '.png', is_gray=True)
+
+    output_image_1 = evaluate(gray[j], image_ab[j], bins[j], model, {
+      'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+      'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    }, 1)
+    save_img(output_image_1, 'Generated - T=1', 'results_324/t1/' + str(i) + '' + str(j) + '.png')
+
+    output_image_2 = evaluate(gray[j], image_ab[j], bins[j], model, {
+      'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+      'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    }, 0.5)
+    save_img(output_image_2, 'Generated - T=0.5', 'results_324/t0_5/' + str(i) + '' + str(j) + '.png')
+
+    output_image_3 = evaluate(gray[j], image_ab[j], bins[j], model, {
+      'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+      'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    }, 0.8)
+    save_img(output_image_3, 'Generated - T=0.8', 'results_324/t0_8/' + str(i) + '' + str(j) + '.png')
+
+    output_image_0 = evaluate(gray[j], image_ab[j], bins[j], model, {
+      'mode': 'cached_colors/second-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+      'mean': 'cached_colors/second-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    }, 0)
+    save_img(output_image_0, 'Generated - T=0', 'results_324/t0/' + str(i) + '' + str(j) + '.png')
+
+# axarr[0].set_title('Ground truth')
+# axarr[0].imshow(to_rgb(gray, image_ab))
+
+# axarr[1].set_title('Generated')
+# axarr[1].imshow(output_image)
+
+# plt.pause(5)
 
 # dataset_bin_colors = {i: [[], []] for i in range(N_BINS)}
 
-# def get_dataset_bin_mode(colors_dict):
-#   x = np.linspace(0,1,W_BIN+1)
-#   distance = x[1]
-#   mode_dict = copy.deepcopy(colors_dict)
+# def get_dataset_bin(colors_dict, mode='mode'):
+#   #_dict = copy.deepcopy(colors_dict)
+#   #del colors_dict
 
-#   for bin in mode_dict:
-#     for channel, _ in enumerate(mode_dict[bin]):
-#       if (len(mode_dict[bin][channel]) > 0):
-#         mode_dict[bin][channel] = np.mean(np.array(mode_dict[bin][channel]))
+#   for bin in colors_dict:
+#     print('Process Bin Nr: {}'.format(bin))
+#     for channel, _ in enumerate(colors_dict[bin]):
+#       if (len(colors_dict[bin][channel]) > 0):
+#         if mode == 'mode':
+#           colors_dict[bin][channel] = np.max(np.array(colors_dict[bin][channel]))
+#         elif mode == 'mean':
+#           colors_dict[bin][channel] = np.mean(np.array(colors_dict[bin][channel]))
 #       else:
-#         mode_dict[bin][channel] = 0
+#         colors_dict[bin][channel] = 0
 
-#   np.save('mean_color_bins_36.npy', mode_dict)
-#   del mode_dict
+#   np.save('cached_colors/second-dataset/' + mode + '_color_bins_'+str(N_BINS)+'_part_1.npy', colors_dict)
+#   del colors_dict
 
 # def calculate_bin(a, b, width):
 #   return (width * b) + a
 
-# def add_to_dict(bin, a, b):
+# def add_to_dict(bin, a, b):  
 #   dataset_bin_colors[bin][0].append(a)
 #   dataset_bin_colors[bin][1].append(b)
 
 # def _encode_bins(ab_image):
 #   x = np.linspace(0,1,W_BIN+1)
 #   indices = np.digitize(ab_image, x) - 1
+#   indices = indices.transpose(1, 2, 0)
   
 #   bins = np.vectorize(calculate_bin)(indices[:,:,0], indices[:,:,1], W_BIN)
-#   np.vectorize(add_to_dict)(bins, ab_image[:,:,0], ab_image[:,:,1])
-
+#   np.vectorize(add_to_dict)(bins, ab_image[0,:,:], ab_image[1,:,:])
 #   return bins
 
 # counter = 0
 
 # for index, y in enumerate(train_loader):
-#   gray_images, ab_images, bins = y
+#   if index < 86:
+#     gray_images, ab_images, bins = y
+    
+#     for i, ab in enumerate(ab_images):
+#       print('Adding image {} from loader {}'.format(str(i), str(index)))
+#       _encode_bins(ab)
 
-#   for ab in ab_images:
-#     _encode_bins(ab)
-
-# get_dataset_bin_mode(dataset_bin_colors)
+# get_dataset_bin(dataset_bin_colors, 'mean')
+# get_dataset_bin(dataset_bin_colors, 'mean')

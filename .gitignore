@@ -1,6 +1,7 @@
 __pycache__/
 _dataset*/
 dataset*/
+results*/
 *.cwl.json
 *.red.json
 *.tar.gz
