@@ -13,12 +13,12 @@ auth = (
 )
 
 r = requests.get(
-  f'{url}/batches?limit=2',
+  f'{url}/batches?limit=4',
   auth=auth
 )
 
 # r = requests.delete(
-#   f'{url}/batches/5f2eb8ab849bbf45c303e6c3',
+#   f'{url}/batches/5f6cbeff7da03f80fc809466',
 #   auth=auth
 # )
 

@@ -29,6 +29,11 @@ inputs:
     inputBinding:
       prefix: "--learning-rate"
     doc: "Training: Learning rate. Default: 0.001"
+  model_divider:
+    type: "int?"
+    inputBinding:
+      prefix: "--model-divider"
+    doc: "Model divider to divide number of the filters in the conv layers. Default 1."
   batch_size:
     type: "int?"
     inputBinding:
@@ -58,7 +63,7 @@ inputs:
     type: "string?"
     inputBinding:
       prefix: "--log-file-name"
-    doc: "Debug: Name of the log file, generated when --log-dir is set. Default: training.log"
+    doc: "Debug: Name of the log file, generated when --log-dir is set. Default: training.csv"
   temperature:
     type: "float?"
     inputBinding:
@@ -74,5 +79,5 @@ outputs:
   weights_file:
     type: "File?"
     outputBinding:
-      glob: "checkpoints/model.pth"
+      glob: "colorization-argumented/checkpoints/model.pth"
     doc: "CNN model weights in PTH format."

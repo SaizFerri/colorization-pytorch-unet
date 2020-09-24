@@ -18,6 +18,10 @@ def validate(val_loader, model, criterion, epoch, use_gpu=False):
 
     # Run model and record loss
     output_bins = model(input_gray)
+
+    if len(output_bins) != len(bins):
+      bins = bins.unsqueeze(0)
+
     loss = criterion(output_bins, bins)
     losses.update(loss.item(), input_gray.size(0))
 

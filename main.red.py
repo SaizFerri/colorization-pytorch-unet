@@ -4,16 +4,46 @@ import json
 
 SSH_SERVER = 'dt1.f4.htw-berlin.de'
 SSH_AUTH = {'username': '{{ssh_username}}', 'password': '{{ssh_password}}'}
-DATA_DIR = 'colorization/dataset_1'
+DATA_DIR = 'colorization-argumented/dataset_augumented'
 AGENCY_URL = 'https://agency.f4.htw-berlin.de/dt'
-BINS = [36, 324]
+EXPERIMENTS = [
+  {
+    "bins": 36,
+    "lr": 0.001,
+    "checkpoints_path": "colorization-argumented/checkpoints/36_big",
+    "log_dir": "colorization-argumented/log/36_big",
+    "divider": 1,
+  },
+  {
+    "bins": 36,
+    "lr": 0.001,
+    "checkpoints_path": "colorization-argumented/checkpoints/36_small",
+    "log_dir": "colorization-argumented/log/36_small",
+    "divider": 2,
+  },
+  {
+    "bins": 324,
+    "lr": 0.001,
+    "checkpoints_path": "colorization-argumented/checkpoints/324_big",
+    "log_dir": "colorization-argumented/log/324_big",
+    "divider": 1,
+  },
+  {
+    "bins": 324,
+    "lr": 0.001,
+    "checkpoints_path": "colorization-argumented/checkpoints/324_small",
+    "log_dir": "colorization-argumented/log/324_small",
+    "divider": 2,
+  },
+]
+# BINS = [36, 324]
 # SAVED_MODEL_FILES = ['model-36-48-124.345.pth', 'model-324-43-208.819.pth']
 # STEPS_PER_EPOCH = 10
 
 
 batches = []
 
-for i, _bins in enumerate(BINS):
+for i, experiment in enumerate(EXPERIMENTS):
   batch = {
     'inputs': {
       'data_dir': {
@@ -36,7 +66,7 @@ for i, _bins in enumerate(BINS):
           'access': {
             'host': SSH_SERVER,
             'auth': SSH_AUTH,
-            'dirPath': 'colorization/checkpoints',
+            'dirPath': experiment["checkpoints_path"],
             'writable': True
           }
         }
@@ -56,10 +86,11 @@ for i, _bins in enumerate(BINS):
       # },
       # 'saved_model_file': SAVED_MODEL_FILES[i],
       'batch_size': 64,
-      'num_bins': _bins,
+      'num_bins': experiment["bins"],
       'from_epoch': 0,
-      'num_epochs': 60,
-      'learning_rate': 0.001,
+      'num_epochs': 50,
+      'learning_rate': experiment["lr"],
+      'model_divider': experiment["divider"],
       'log_dir': {
         'class': 'Directory',
         'connector': {
@@ -68,12 +99,12 @@ for i, _bins in enumerate(BINS):
           'access': {
             'host': SSH_SERVER,
             'auth': SSH_AUTH,
-            'dirPath': 'colorization/log',
+            'dirPath': experiment["log_dir"],
             'writable': True
           }
         }
       },
-      'log_file_name': 'training_'+str(_bins)+'.log',
+      'log_file_name': 'training_'+str(experiment["bins"])+'.csv',
       'temperature': 1
     },
     'outputs': {
@@ -84,7 +115,7 @@ for i, _bins in enumerate(BINS):
           'access': {
             'host': SSH_SERVER,
             'auth': SSH_AUTH,
-            'filePath': 'checkpoints/model.pth',
+            'filePath': '{}/model.pth'.format(experiment["checkpoints_path"]),
           }
         }
       }

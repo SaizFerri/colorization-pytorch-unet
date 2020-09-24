@@ -28,38 +28,38 @@ class Conv2dBlock(nn.Module):
     return out
 
 class Model(nn.Module):
-  def __init__(self, n_out):
+  def __init__(self, n_out, divider=1):
     super(Model, self).__init__()
     
     # Encoder
-    self.conv1 = Conv2dBlock(1, 16)
+    self.conv1 = Conv2dBlock(1, int(16 / divider))
     self.pool1 = nn.MaxPool2d(2, 2)
 
-    self.conv2 = Conv2dBlock(16, 32)
+    self.conv2 = Conv2dBlock(int(16 / divider), int(32 / divider))
     self.pool2 = nn.MaxPool2d(2, 2)
 
-    self.conv3 = Conv2dBlock(32, 64)
+    self.conv3 = Conv2dBlock(int(32 / divider), int(64 / divider))
     self.pool3 = nn.MaxPool2d(2, 2)
 
-    self.conv4 = Conv2dBlock(64, 128)
+    self.conv4 = Conv2dBlock(int(64 / divider), int(128 / divider))
     self.pool4 = nn.MaxPool2d(2, 2)
 
-    self.conv5 = Conv2dBlock(128, 256)
+    self.conv5 = Conv2dBlock(int(128 / divider), int(256 / divider))
 
     # Decoder
-    self.upconv6 = nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+    self.upconv6 = nn.ConvTranspose2d(int(256 / divider), int(128 / divider), kernel_size=3, stride=2, padding=1, output_padding=1)
 
-    self.conv6   = Conv2dBlock(256, 128)
-    self.upconv7 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+    self.conv6   = Conv2dBlock(int(256 / divider), int(128 / divider))
+    self.upconv7 = nn.ConvTranspose2d(int(128 / divider), int(64 / divider), kernel_size=3, stride=2, padding=1, output_padding=1)
 
-    self.conv7   = Conv2dBlock(128, 64)
-    self.upconv8 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
+    self.conv7   = Conv2dBlock(int(128 / divider), int(64 / divider))
+    self.upconv8 = nn.ConvTranspose2d(int(64 / divider), int(32 / divider), kernel_size=3, stride=2, padding=1, output_padding=1)
 
-    self.conv8   = Conv2dBlock(64, 32)
-    self.upconv9 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1)
+    self.conv8   = Conv2dBlock(int(64 / divider), int(32 / divider))
+    self.upconv9 = nn.ConvTranspose2d(int(32 / divider), int(16 / divider), kernel_size=3, stride=2, padding=1, output_padding=1)
 
-    self.conv9   = Conv2dBlock(32, 16)
-    self.conv10   = nn.Conv2d(16, n_out, kernel_size=1, stride=1, padding=0)
+    self.conv9   = Conv2dBlock(int(32 / divider), int(16 / divider))
+    self.conv10   = nn.Conv2d(int(16 / divider), n_out, kernel_size=1, stride=1, padding=0)
 
   def forward(self, x):
     c1 = self.conv1(x)

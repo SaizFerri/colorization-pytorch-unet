@@ -19,6 +19,10 @@ def train(train_loader, model, criterion, optimizer, epoch, use_gpu=False):
 
     # Run forward pass
     output_bins = model(input_gray)
+
+    if len(output_bins) != len(bins):
+      bins = bins.unsqueeze(0)
+    
     loss = criterion(output_bins, bins)
     losses.update(loss.item(), input_gray.size(0))
 
@@ -41,3 +45,4 @@ def train(train_loader, model, criterion, optimizer, epoch, use_gpu=False):
              data_time=data_time, loss=losses)) 
 
   print('Finished training epoch {}'.format(epoch))
+  return losses.avg
