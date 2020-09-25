@@ -13,7 +13,7 @@ auth = (
 )
 
 r = requests.get(
-  f'{url}/batches?limit=4',
+  f'{url}/batches?limit=1',
   auth=auth
 )
 

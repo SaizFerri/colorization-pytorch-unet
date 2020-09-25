@@ -4,35 +4,14 @@ import json
 
 SSH_SERVER = 'dt1.f4.htw-berlin.de'
 SSH_AUTH = {'username': '{{ssh_username}}', 'password': '{{ssh_password}}'}
-DATA_DIR = 'colorization-argumented/dataset_augumented'
+DATA_DIR = 'colorization-argumented/dataset_augumented_no_uncategorized'
 AGENCY_URL = 'https://agency.f4.htw-berlin.de/dt'
 EXPERIMENTS = [
   {
     "bins": 36,
     "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/36_big",
-    "log_dir": "colorization-argumented/log/36_big",
-    "divider": 1,
-  },
-  {
-    "bins": 36,
-    "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/36_small",
-    "log_dir": "colorization-argumented/log/36_small",
-    "divider": 2,
-  },
-  {
-    "bins": 324,
-    "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/324_big",
-    "log_dir": "colorization-argumented/log/324_big",
-    "divider": 1,
-  },
-  {
-    "bins": 324,
-    "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/324_small",
-    "log_dir": "colorization-argumented/log/324_small",
+    "checkpoints_path": "colorization-argumented/checkpoints/36_small_no_uncategorized",
+    "log_dir": "colorization-argumented/log/36_small_no_uncategorized",
     "divider": 2,
   },
 ]
