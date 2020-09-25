@@ -1,4 +1,5 @@
 import os
+from glob import glob
 
 import imageio
 import imgaug as ia
@@ -10,10 +11,21 @@ import matplotlib.patches as patches
 import matplotlib
 
 DATASET_PATH = "dataset_clean/train/"
-AUGUMENTED_PATH = "dataset_augumented/train/"
-AUGUMENTED_VAL_PATH = "dataset_augumented/val/"
+DATASET_VAL_PATH = "dataset_clean/val/"
+AUGUMENTED_PATH = "dataset_resized/train/"
+AUGUMENTED_VAL_PATH = "dataset_resized/val/"
 CLASSES = ["field", "forest", "glacier", "lake", "mountain", "road", "sea", "uncategorized"]
 SIZE = 128
+
+# for _class in CLASSES:
+#   train_files = glob("./{}{}/*".format(AUGUMENTED_PATH, _class))
+#   val_files = glob("./{}{}/*".format(AUGUMENTED_VAL_PATH, _class))
+
+#   for f in train_files:
+#     os.remove(f)
+
+#   for f in val_files:
+#     os.remove(f)
 
 aug = iaa.Resize({"height": SIZE, "width": SIZE})
 rotate=iaa.Affine(rotate=(-30, 30))
@@ -30,8 +42,8 @@ for i, _class in enumerate(CLASSES):
 
 # Resize validation images to the given size
 for i, _class in enumerate(CLASSES):
-  for filename in os.listdir(AUGUMENTED_VAL_PATH + "/" + CLASSES[i]):
-    image = imageio.imread(AUGUMENTED_VAL_PATH + "/" + CLASSES[i] + "/" + filename)
+  for filename in os.listdir(DATASET_VAL_PATH + "/" + CLASSES[i]):
+    image = imageio.imread(DATASET_VAL_PATH + "/" + CLASSES[i] + "/" + filename)
     augumented_img = aug.augment_image(image)
     imageio.imwrite(AUGUMENTED_VAL_PATH + "/" + CLASSES[i] + "/" + filename, augumented_img)
 
