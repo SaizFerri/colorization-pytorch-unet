@@ -8,10 +8,10 @@ DATA_DIR = 'colorization-argumented/dataset_augumented_no_uncategorized'
 AGENCY_URL = 'https://agency.f4.htw-berlin.de/dt'
 EXPERIMENTS = [
   {
-    "bins": 36,
+    "bins": 324,
     "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/36_small_no_uncategorized_tanh",
-    "log_dir": "colorization-argumented/log/36_small_no_uncategorized_tanh",
+    "checkpoints_path": "colorization-argumented/checkpoints/324_small_no_uncategorized",
+    "log_dir": "colorization-argumented/log/324_small_no_uncategorized",
     "divider": 2,
   },
 ]

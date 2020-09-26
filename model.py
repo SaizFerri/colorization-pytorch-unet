@@ -20,12 +20,12 @@ class Conv2dBlock(nn.Module):
   def forward(self, x):
     x = self.conv1(x)
     x = self.batch_norm1(x)
-    # x = F.relu(x)
-    x = F.tanh(x)
+    x = F.relu(x)
+    # x = F.tanh(x)
     x = self.conv2(x)
     x = self.batch_norm2(x)
-    # out = F.relu(x)
-    out = F.tanh(x)
+    out = F.relu(x)
+    # out = F.tanh(x)
 
     return out
 
