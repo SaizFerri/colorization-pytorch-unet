@@ -10,8 +10,8 @@ EXPERIMENTS = [
   {
     "bins": 36,
     "lr": 0.001,
-    "checkpoints_path": "colorization-argumented/checkpoints/36_small_no_uncategorized",
-    "log_dir": "colorization-argumented/log/36_small_no_uncategorized",
+    "checkpoints_path": "colorization-argumented/checkpoints/36_small_no_uncategorized_tanh",
+    "log_dir": "colorization-argumented/log/36_small_no_uncategorized_tanh",
     "divider": 2,
   },
 ]
