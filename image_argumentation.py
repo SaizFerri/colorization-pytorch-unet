@@ -27,7 +27,11 @@ SIZE = 128
 #   for f in val_files:
 #     os.remove(f)
 
-aug = iaa.Resize({"height": SIZE, "width": SIZE})
+aug = iaa.Resize({"height": SIZE, "width": SIZE}, "cubic")
+# image = imageio.imread("dataset_clean/val/uncategorized/00000002.jpg")
+# augumented_img = aug.augment_image(image)
+# plt.imshow(augumented_img)
+# plt.pause(5)
 rotate=iaa.Affine(rotate=(-30, 30))
 crop = iaa.Crop(percent=(0, 0.3))
 flip_hr=iaa.Fliplr(p=1.0)
