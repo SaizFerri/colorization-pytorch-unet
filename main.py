@@ -85,7 +85,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-  '--log-dir', type=str, default=None,
+  '--log-dir', type=str, default='.',
   help='Debug: Path to writable directory for a log file to be created. Default: log to stdout / stderr'
 )
 
@@ -184,52 +184,57 @@ val_loader = torch.utils.data.DataLoader(val_imagefolder, batch_size=args.batch_
 '''
 Training
 '''
-# model = Model(N_BINS, args.model_divider)
-
-# if SAVED_MODEL_PATH is not None:
-#   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
-#   print(SAVED_MODEL_PATH)
-#   print('Model loaded')
-
-# criterion = nn.CrossEntropyLoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-# # scheduler = ReduceLROnPlateau(optimizer, 'min', patience=10)
-
-# if use_gpu: 
-#   criterion = criterion.cuda()
-#   model = model.cuda()
-
-# epochs = args.num_epochs
-# best_losses = 3
-
-# with log_file as output:
-#   writer = csv.writer(output)
-#   writer.writerow(['epoch', 'train_loss', 'val_loss'])
-
-#   for epoch in range(args.from_epoch, epochs):
-#     if use_gpu and epoch > args.from_epoch:
-#       model.cuda()
-#     # Train for one epoch, then validate
-#     train_loss = train(train_loader, model, criterion, optimizer, epoch, use_gpu)
-#     with torch.no_grad():
-#       val_loss = validate(val_loader, model, criterion, epoch, use_gpu)
-#       # scheduler.step(val_loss)
-
-#     writer.writerow([epoch, train_loss, val_loss])
-#     # Save checkpoint and replace old best model if current model is better
-#     if val_loss < best_losses:
-#       best_losses = val_loss
-#       torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,val_loss))
-
-'''
-  Evaluate one image with trained model
-'''
 model = Model(N_BINS, args.model_divider)
 
 if SAVED_MODEL_PATH is not None:
   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
   print(SAVED_MODEL_PATH)
   print('Model loaded')
+
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+# scheduler = ReduceLROnPlateau(optimizer, 'min', patience=10)
+
+if use_gpu: 
+  criterion = criterion.cuda()
+  model = model.cuda()
+
+epochs = args.num_epochs
+best_losses = 3
+
+with log_file as output:
+  writer = csv.writer(output)
+  writer.writerow(['epoch', 'train_loss', 'val_loss'])
+
+  for epoch in range(args.from_epoch, epochs):
+    if use_gpu and epoch > args.from_epoch:
+      model.cuda()
+    # Train for one epoch, then validate
+    train_loss = train(train_loader, model, criterion, optimizer, epoch, use_gpu)
+    with torch.no_grad():
+      val_loss = validate(val_loader, model, criterion, epoch, use_gpu)
+      # scheduler.step(val_loss)
+
+    writer.writerow([epoch, train_loss, val_loss])
+    # Save checkpoint and replace old best model if current model is better
+    if val_loss < best_losses:
+      best_losses = val_loss
+      torch.save(model.to('cpu').state_dict(), '{}/model-{}-{}-{:.3f}.pth'.format(CHECKPOINTS_PATH, N_BINS, epoch+1,val_loss))
+
+'''
+--------------------------------------------
+THE CODE BELOW WAS USED FOR TESTING PURPOSES
+--------------------------------------------
+'''
+'''
+  Evaluate one image with trained model
+'''
+# model = Model(N_BINS, args.model_divider)
+
+# if SAVED_MODEL_PATH is not None:
+#   model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+#   print(SAVED_MODEL_PATH)
+#   print('Model loaded')
 # model.load_state_dict(torch.load('{}model-324-43-208.819.pth'.format(CHECKPOINTS_PATH)))
 
 # image = Image.open('dataset_1/val/field/243202127_1f7da59043.jpg')
@@ -277,37 +282,40 @@ def save_img(img, label, path, is_gray=False):
   f.savefig(path)
   plt.close(f)
 
-for i, loader in enumerate(val_loader):
-  gray, image_ab, bins = loader
+'''
+Save evaluation images to folder
+'''
+# for i, loader in enumerate(val_loader):
+#   gray, image_ab, bins = loader
 
-  for j in range(len(gray)):
-    # save_img(to_rgb(gray[j], image_ab[j]), 'Ground Truth', 'results_324/ground_truth/' + str(i) + '' + str(j) + '.png')
+#   for j in range(len(gray)):
+#     save_img(to_rgb(gray[j], image_ab[j]), 'Ground Truth', 'results_324/ground_truth/' + str(i) + '' + str(j) + '.png')
 
-    # save_img(gray[j].squeeze(0), 'Grayscale', 'results_324/grayscale/' + str(i) + '' + str(j) + '.png', is_gray=True)
+#     save_img(gray[j].squeeze(0), 'Grayscale', 'results_324/grayscale/' + str(i) + '' + str(j) + '.png', is_gray=True)
 
-    output_image_1 = evaluate(gray[j], image_ab[j], bins[j], model, {
-      'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
-      'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
-    }, 1)
-    save_img(output_image_1, 'Generated - T=1', 'results_324/t1/' + str(i) + '' + str(j) + '.png')
+    # output_image_1 = evaluate(gray[j], image_ab[j], bins[j], model, {
+    #   'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+    #   'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    # }, 1)
+    # save_img(output_image_1, 'Generated - T=1', 'results_324/t1/' + str(i) + '' + str(j) + '.png')
 
-    output_image_2 = evaluate(gray[j], image_ab[j], bins[j], model, {
-      'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
-      'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
-    }, 0.5)
-    save_img(output_image_2, 'Generated - T=0.5', 'results_324/t0_5/' + str(i) + '' + str(j) + '.png')
+    # output_image_2 = evaluate(gray[j], image_ab[j], bins[j], model, {
+    #   'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+    #   'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    # }, 0.5)
+    # save_img(output_image_2, 'Generated - T=0.5', 'results_324/t0_5/' + str(i) + '' + str(j) + '.png')
 
-    output_image_3 = evaluate(gray[j], image_ab[j], bins[j], model, {
-      'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
-      'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
-    }, 0.8)
-    save_img(output_image_3, 'Generated - T=0.8', 'results_324/t0_8/' + str(i) + '' + str(j) + '.png')
+    # output_image_3 = evaluate(gray[j], image_ab[j], bins[j], model, {
+    #   'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+    #   'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    # }, 0.8)
+    # save_img(output_image_3, 'Generated - T=0.8', 'results_324/t0_8/' + str(i) + '' + str(j) + '.png')
 
-    output_image_0 = evaluate(gray[j], image_ab[j], bins[j], model, {
-      'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
-      'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
-    }, 0)
-    save_img(output_image_0, 'Generated - T=0', 'results_324/t0/' + str(i) + '' + str(j) + '.png')
+    # output_image_0 = evaluate(gray[j], image_ab[j], bins[j], model, {
+    #   'mode': 'cached_colors/argumented-dataset/mode_color_bins_'+str(N_BINS)+'.npy',
+    #   'mean': 'cached_colors/argumented-dataset/mean_color_bins_'+str(N_BINS)+'.npy'
+    # }, 0)
+    # save_img(output_image_0, 'Generated - T=0', 'results_324/t0/' + str(i) + '' + str(j) + '.png')
 
 # axarr[0].set_title('Ground truth')
 # axarr[0].imshow(to_rgb(gray, image_ab))
@@ -317,6 +325,9 @@ for i, loader in enumerate(val_loader):
 
 # plt.pause(5)
 
+'''
+Encode colors to bins from the training images
+'''
 # dataset_bin_colors = {i: [[], []] for i in range(N_BINS)}
 
 # def get_dataset_bin(colors_dict, mode='mode'):
